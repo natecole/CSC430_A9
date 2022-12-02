@@ -80,20 +80,43 @@ CONSTANT: top-env {
 
 ! : lookup ( sym env -- val )
 
+: evaluate ( op args -- val )
+    swap dup {
+        { [ dup "+" = ] [ 2drop dup first swap second + ] }
+        { [ dup "-" = ] [ drop drop dup first swap second - ] }
+        { [ dup "*" = ] [ drop drop dup first swap second * ] }
+        { [ dup "/" = ] [ drop drop dup first swap second / ] }
+        { [ dup "<=" = ] [ drop drop dup first swap second <= ] }
+        { [ dup "equal" = ] [ drop drop dup first swap second = ] }
+        { [ dup "true" = ] [ drop drop drop t ] }
+        { [ dup "false" = ] [ drop drop drop f ] }
+        [ drop drop drop "error" ]
+    } cond ;
 
-: interp ( ast -- val )
-    dup {
-        { [ dup numC? ] [ num>> swap ] }
-        { [ dup idC? ] [ sym>> id>> swap ] }
-        { [ dup strC? ] [ str>> swap ] }
-        { [ dup ifC? ] [ if>> interp swap ] }
-        { [ dup lamC? ] [ body>> interp swap ] }
+: interp ( ast env -- val )
+    swap dup {
+        { [ dup numC? ] [ num>> ] }
+        { [ dup idC? ] [ sym>> id>> {
+            { [ dup "false" = ] [ drop f ] }
+            { [ dup "true" = ] [ drop t ] }
+            [ ] 
+        } cond ] }
+        { [ dup strC? ] [ str>> ] }
+        { [ dup ifC? ] [ if>> swapd over interp {
+            { [ dup f = ] [ drop f -rot swap else>> swap interp f swap ] }
+            [ drop f -rot swap then>> swap interp f swap ]
+        } cond ] }
+        ! { [ dup lamC? ] [ dup id>> swap body>> swap T{ closV . . . } ] }
+        ! { [ dup appC? ] [  ] }
         [ "not an ExprC" print ]
-    } cond
-    drop ;
+    } cond 2nip ;
+
 
 T{ numC f 3 } interp .
 T{ idC f T{ symbol f "x" } } interp .
+T{ idC f T{ symbol f "true" } } interp .
+T{ idC f T{ symbol f "false" } } interp .
 T{ strC f "hello" } interp .
-T{ ifC f T{ idC f T{ symbol f "true" } } T{ numC f 1 } T{ numC f -1 } } interp .
+T{ ifC f T{ idC f T{ symbol f "false" } } T{ numC f 2345 } T{ numC f -1 } } interp .
 T{ lamC f { T{ idC f T{ symbol f "x" } } } T{ strC f "body" } } interp .
+
