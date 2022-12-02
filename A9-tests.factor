@@ -8,7 +8,7 @@ USING: A9 tools.test ;
 { f } [ T{ idC f T{ symbol f "false" } } top-env interp ] unit-test
 
 { 1 } [ T{ ifC f T{ idC f T{ symbol f "true" } } T{ numC f 1 } T{ numC f -1 } } top-env interp ] unit-test
-{ -1 } [ T{ ifC f T{ idC f T{ symbol f "true" } } T{ numC f 1 } T{ numC f -1 } } top-env interp ] unit-test
+{ -1 } [ T{ ifC f T{ idC f T{ symbol f "false" } } T{ numC f 1 } T{ numC f -1 } } top-env interp ] unit-test
 
 { 3 } [ "+" [ 1 2 ] evaluate ] unit-test
 { 6 } [ "-" [ 8 2 ] evaluate ] unit-test
